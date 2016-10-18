@@ -9,6 +9,8 @@
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
 // THE CODE OR THE USE OR OTHER DEALINGS IN THE CODE.
 // ******************************************************************
+
+using System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
@@ -55,7 +57,21 @@ namespace Microsoft.Toolkit.Uwp.UI.Controls
         /// <summary>
         /// Gets the collection used to generate the content of the option list.
         /// </summary>
-        public ItemCollection OptionsItems => _optionsListView?.Items;
+        /// <exception cref="Exception">
+        /// Exception thrown if OptionsListView is not yet defined.
+        /// </exception>
+        public ItemCollection OptionsItems
+        {
+            get
+            {
+                if (_optionsListView == null)
+                {
+                    throw new Exception("OptionsListView is not defined yet. Please use OptionsItemsSource instead.");
+                }
+
+                return _optionsListView?.Items;
+            }
+        }
 
         /// <summary>
         /// Gets or sets options' visibility.
@@ -64,6 +80,24 @@ namespace Microsoft.Toolkit.Uwp.UI.Controls
         {
             get { return (Visibility)GetValue(OptionsVisibilityProperty); }
             set { SetValue(OptionsVisibilityProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets the selected options menu item.
+        /// </summary>
+        public object SelectedOptionsItem
+        {
+            get { return _optionsListView.SelectedItem; }
+            set { _optionsListView.SelectedItem = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the selected options menu index.
+        /// </summary>
+        public int SelectedOptionsIndex
+        {
+            get { return _optionsListView.SelectedIndex; }
+            set { _optionsListView.SelectedIndex = value; }
         }
     }
 }

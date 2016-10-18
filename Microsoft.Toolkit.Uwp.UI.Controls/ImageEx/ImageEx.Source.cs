@@ -11,9 +11,9 @@
 // ******************************************************************
 
 using System;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
-using global::Windows.UI.Xaml.Controls;
-using global::Windows.UI.Xaml.Data;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
@@ -74,6 +74,8 @@ namespace Microsoft.Toolkit.Uwp.UI.Controls
                 if (imageSource != null)
                 {
                     _image.Source = imageSource;
+                    ImageExOpened?.Invoke(this, new ImageExOpenedEventArgs());
+                    VisualStateManager.GoToState(this, LoadedState, true);
                     return;
                 }
 
@@ -105,16 +107,27 @@ namespace Microsoft.Toolkit.Uwp.UI.Controls
                 _isLoadingImage = true;
                 if (IsCacheEnabled && _isHttpSource)
                 {
+                    var ogUri = _uri;
                     try
                     {
-                        _image.Source = await ImageCache.GetFromCacheAsync(_uri, true);
-                        ImageExOpened?.Invoke(this, new ImageExOpenedEventArgs());
-                        VisualStateManager.GoToState(this, LoadedState, true);
+                        var img = await ImageCache.Instance.GetFromCacheAsync(ogUri, Path.GetFileName(ogUri.ToString()), true);
+
+                        // If you have many imageEx in a virtualized listview for instance
+                        // controls will be recycled and the uri will change while waiting for the previous one to load
+                        if (_uri == ogUri)
+                        {
+                            _image.Source = img;
+                            ImageExOpened?.Invoke(this, new ImageExOpenedEventArgs());
+                            VisualStateManager.GoToState(this, LoadedState, true);
+                        }
                     }
                     catch (Exception e)
                     {
-                        ImageExFailed?.Invoke(this, new ImageExFailedEventArgs(e));
-                        VisualStateManager.GoToState(this, FailedState, true);
+                        if (_uri == ogUri)
+                        {
+                            ImageExFailed?.Invoke(this, new ImageExFailedEventArgs(e));
+                            VisualStateManager.GoToState(this, FailedState, true);
+                        }
                     }
                 }
                 else

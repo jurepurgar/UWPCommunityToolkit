@@ -1,5 +1,4 @@
 ﻿// ******************************************************************
-//
 // Copyright (c) Microsoft. All rights reserved.
 // This code is licensed under the MIT License (MIT).
 // THE CODE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
@@ -9,10 +8,11 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
 // THE CODE OR THE USE OR OTHER DEALINGS IN THE CODE.
-//
 // ******************************************************************
+
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Toolkit.Uwp.Services.Core;
@@ -41,7 +41,22 @@ namespace Microsoft.Toolkit.Uwp.Services.Bing
         protected override async Task<IEnumerable<TSchema>> GetDataAsync<TSchema>(BingSearchConfig config, int maxRecords, IParser<TSchema> parser)
         {
             var countryValue = config.Country.GetStringValue();
-            var locParameter = string.IsNullOrEmpty(countryValue) ? string.Empty : $"loc:{countryValue}+";
+            var languageValue = config.Language.GetStringValue();
+            var languageParameter = string.IsNullOrEmpty(languageValue) ? string.Empty : $"language:{languageValue}+";
+
+            if (string.IsNullOrEmpty(countryValue))
+            {
+                if (CultureInfo.CurrentCulture.IsNeutralCulture)
+                {
+                    countryValue = BingCountry.None.GetStringValue();
+                }
+                else
+                {
+                    countryValue = CultureInfo.CurrentCulture.Name.Split('-')[1].ToLower();
+                }
+            }
+
+            var locParameter = $"loc:{countryValue}+";
             var queryTypeParameter = string.Empty;
 
             switch (config.QueryType)
@@ -56,7 +71,7 @@ namespace Microsoft.Toolkit.Uwp.Services.Bing
 
             var settings = new HttpRequestSettings
             {
-                RequestedUri = new Uri($"{BaseUrl}{queryTypeParameter}/search?q={locParameter}{WebUtility.UrlEncode(config.Query)}&format=rss&count={maxRecords}")
+                RequestedUri = new Uri($"{BaseUrl}{queryTypeParameter}/search?q={locParameter}{languageParameter}{WebUtility.UrlEncode(config.Query)}&format=rss&count={maxRecords}")
             };
 
             HttpRequestResult result = await HttpRequest.DownloadAsync(settings);

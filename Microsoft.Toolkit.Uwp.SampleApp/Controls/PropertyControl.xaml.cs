@@ -9,6 +9,7 @@
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
 // THE CODE OR THE USE OR OTHER DEALINGS IN THE CODE.
 // ******************************************************************
+
 using System;
 using System.Linq;
 using System.Reflection;
@@ -89,12 +90,14 @@ namespace Microsoft.Toolkit.Uwp.SampleApp.Controls
 
                             break;
                         case PropertyKind.Enum:
+                            var enumType = option.DefaultValue.GetType();
                             var comboBox = new ComboBox
                             {
-                                ItemsSource = Enum.GetNames(option.DefaultValue.GetType()),
+                                ItemsSource = Enum.GetNames(enumType),
                                 SelectedItem = option.DefaultValue.ToString()
                             };
 
+                            converter = new EnumConverter(enumType);
                             controlToAdd = comboBox;
                             dependencyProperty = Selector.SelectedItemProperty;
                             break;
